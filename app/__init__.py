@@ -2,14 +2,26 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
-from keras.models import load_model
+import tflite_runtime.interpreter as tflite
+import numpy as np
 
-# init SQLAlchemy so we can use it later in our models
+
+# setup db, mail, dummy camera
 db = SQLAlchemy()
 mail = Mail()
+picam2 = ''
 
-# load keras model
-keras_model = load_model("model\keras_mAlexNet\out_keras.h5")
+# load tflite model
+model = "/home/michael/Desktop/VNOS/model/model.tflite"
+interpreter = tflite.Interpreter(model_path=model, num_threads=4)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+height = input_details[0]['shape'][1]
+width = input_details[0]['shape'][2]
+floating_model = False
+if input_details[0]['dtype'] == np.float32:
+    floating_model = True
 
 
 def create_app():
@@ -36,14 +48,11 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        # since the user_id is just the primary key of our user table, use it in the query for the user
         return User.query.get(int(user_id))
 
-    # blueprint for auth routes in our app
     from auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
 
-    # blueprint for non-auth parts of app
     from main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
