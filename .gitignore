@@ -109,7 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-VNOSvens/
+VNOSvenv/
 
 # Spyder project settings
 .spyderproject
