@@ -17,7 +17,7 @@ class StreamingOutput(io.BufferedIOBase):
             self.condition.notify_all()
 
 
-def init_camera():
+def init_camera() -> Picamera2:
     picam2 = Picamera2()
     picam2.start_preview()
     config = picam2.video_configuration(main={"size": picam2_resolution})
@@ -26,7 +26,7 @@ def init_camera():
     return picam2
 
 
-def gather_img(picam2, output):
+def gather_img(picam2:Picamera2, output:StreamingOutput):
     while True:
         with output.condition:
             # time.sleep(0.1)
