@@ -1,27 +1,20 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from core_logic import init_model
 from flask_mail import Mail
-import tflite_runtime.interpreter as tflite
-import numpy as np
+from flask import Flask
 
 
 # setup db, mail, dummy camera
 db = SQLAlchemy()
 mail = Mail()
-picam2 = ''
+picam2 = None
+picam2_resolution = (2240, 1680)# (1280, 960) # (640, 480)
 
-# load tflite model
-model = "/home/michael/Desktop/VNOS/model/model.tflite"
-interpreter = tflite.Interpreter(model_path=model, num_threads=4)
-interpreter.allocate_tensors()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-height = input_details[0]['shape'][1]
-width = input_details[0]['shape'][2]
-floating_model = False
-if input_details[0]['dtype'] == np.float32:
-    floating_model = True
+# load tflite model. initialize segmentation mask overlay
+init_model('/home/michael/Desktop/VNOS/model/model.tflite',
+           '/home/michael/Desktop/VNOS/data/segmentation_mask.csv',
+           picam2_resolution)
 
 
 def create_app():
@@ -29,11 +22,12 @@ def create_app():
 
     app.config['SECRET_KEY'] = 'secret-key-goes-here'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USERNAME'] = 'krocka.michael@gmail.com'
-    app.config['MAIL_PASSWORD'] = '7bleqf4nnb'
+    app.config['MAIL_PASSWORD'] = '7bleqf4nnb' # 'dummy_password'
     app.config['MAIL_USE_TLS'] = False
     app.config['MAIL_USE_SSL'] = True
 
@@ -45,7 +39,6 @@ def create_app():
     login_manager.init_app(app)
 
     from models import User
-
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))

@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
-from models import User
+from werkzeug.security import generate_password_hash, check_password_hash
 from __init__ import db, picam2
+from models import User
+
 
 auth = Blueprint('auth', __name__)
 
@@ -20,7 +21,7 @@ def login_post():
     user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
-        flash('Please check your login details and try again.')
+        flash('Please check your login details and try again.', 'error')
         return redirect(url_for('auth.login'))
 
     login_user(user, remember=remember)
@@ -43,9 +44,7 @@ def signup_post():
         flash('Email address already exists')
         return redirect(url_for('auth.signup'))
 
-    new_user = User(email=email, name=name,
-                    password=generate_password_hash(password, method='sha256'))
-
+    new_user = User(email=email, name=name, password=generate_password_hash(password, method='sha256'))
     db.session.add(new_user)
     db.session.commit()
 
@@ -55,7 +54,7 @@ def signup_post():
 @auth.route('/logout')
 @login_required
 def logout():
-    if picam2 != '':
+    if picam2 is not None:
         picam2.stop_recording()
     logout_user()
     return redirect(url_for('auth.login'))
@@ -64,7 +63,7 @@ def logout():
 @auth.route('/profile')
 @login_required
 def profile():
-    if picam2 != '':
+    if picam2 is not None:
         picam2.stop_recording()
     return render_template('profile.html', name=current_user.name)
 
@@ -76,7 +75,6 @@ def profile_put():
     name = request.form.get('name')
     new_password = request.form.get('new_password')
     old_password = request.form.get('old_password')
-
     user = User.query.filter_by(email=email).first()
 
     if user and check_password_hash(user.password, old_password):
@@ -88,8 +86,7 @@ def profile_put():
             setattr(user, 'name', name)
             flash_msg += 'Name' if flash_msg == '' else ', Name'
         if new_password and new_password != old_password:
-            setattr(user, 'password', generate_password_hash(
-                new_password, method='sha256'))
+            setattr(user, 'password', generate_password_hash(new_password, method='sha256'))
             flash_msg += 'Password' if flash_msg == '' else ', Password'
 
         if flash_msg == '':
@@ -103,9 +100,6 @@ def profile_put():
     if not user:
         flash(f'User not found.', 'error')
     if not check_password_hash(user.password, old_password):
-        if old_password == '':
-            flash('Please enter your password.', 'error')
-        else:
-            flash('Incorrect password.', 'error')
+        flash('Please enter your password.', 'error') if old_password == '' else flash('Incorrect password.', 'error')
 
     return render_template('profile.html', name=current_user.name)
