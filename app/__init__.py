@@ -9,11 +9,11 @@ from flask import Flask
 db = SQLAlchemy()
 mail = Mail()
 picam2 = None
-picam2_resolution = (2240, 1680)# (1280, 960) # (640, 480)
+picam2_resolution = (1920, 1440) # (2240, 1680) # (1280, 960) # (640, 480)
 
 # load tflite model. initialize segmentation mask overlay
-init_model('/home/michael/Desktop/VNOS/model/model.tflite',
-           '/home/michael/Desktop/VNOS/data/segmentation_mask.csv',
+init_model('/home/michael/Desktop/Extending-Parking-Occupancy-Detection-Model-for-Night-Lighting-and-Snowy-Weather-Conditions/FlaskWebApp//model/model.tflite',
+           '/home/michael/Desktop/Extending-Parking-Occupancy-Detection-Model-for-Night-Lighting-and-Snowy-Weather-Conditions/FlaskWebApp/data/segmentation_mask.csv',
            picam2_resolution)
 
 

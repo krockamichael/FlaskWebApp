@@ -41,7 +41,7 @@ def predict():
         # send email
         if statuses is not None:
             msg = Message('Hello from flask parking app',
-                          body='\n\n'.join(statuses),
+                          body='\n\n'.join(statuses) if 'No parking status change' not in statuses else statuses,
                           sender=current_user.email,
                           recipients=[current_user.email])
             mail.send(msg)
